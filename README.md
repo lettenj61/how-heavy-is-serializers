@@ -5,6 +5,55 @@ Comparing output JavaScript blob size of Scala.js project by JSON serialization 
 - No tests were provided.
 - Sample code did not run, as it used just to run compilation process.
 
+## the data
+
+``` scala
+case class Foo(name: String = "foo", age: Int)
+
+sealed trait Bar {
+  def millis: Long
+}
+object Bar {
+
+  case object Bobx extends Bar {
+    def millis: Long = 1L
+  }
+
+  final case class BaBomb(millis: Long) extends Bar
+}
+```
+
+## what this sample program do
+- serialize given Scala object into JSON format, for each of
+    - Scala case class `Foo()`.
+    - Scala collection which has the case class as its value `Map[String, Bar]`.
+- print its result string by `console.log()`
+
+sample code for Circe:
+
+``` scala
+import io.circe._, generic.semiauto._, syntax._
+
+object CirceSample extends js.JSApp {
+
+  implicit val fooEncoder = deriveEncoder[Foo]
+  implicit val fooDecoder = deriveDecoder[Foo]
+  implicit val barEncoder = deriveEncoder[Bar]
+  implicit val barDecoder = deriveDecoder[Bar]
+
+  def main(): Unit = {
+    val j = Foo(age = 60).asJson
+    println(j.noSpaces)
+
+    val j2 = Map[String, Bar](
+      "one" -> Bar.Bobx,
+      "two" -> Bar.BaBomb(32L)
+    )
+    println(j2.asJson.noSpaces)
+  }
+}
+```
+
 ## result: serializing case class -> JSON
 
 > for Scala.js linker version 0.6.16, scalac version 2.12.1
